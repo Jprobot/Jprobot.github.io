@@ -1,0 +1,259 @@
+<html>
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script>
+            $(function(){
+                var gameLoopSpeed = 100;
+                var pattern = 0;
+                var pipespeed= 5000;
+                var score= 0;
+                var stop= false;
+                function gameLoop(){
+                    if (stop==false)
+                    {
+                        fall();
+                        checkCollision();
+                        checkScore();
+                        pattern++;
+                        if(pattern%20==19){
+                            addPipe();
+                        }
+                    }
+                }
+
+                    window.setInterval(gameLoop, gameLoopSpeed);
+                    var gravity = 1.5;
+                    var speed = 0;
+                    var jumping = false;
+                    function fall(){
+                        if (!jumping){
+                            speed += gravity;
+                            $("#bird").stop().animate({
+                                top:"+=" + speed + "%"
+                            },gameLoopSpeed,"linear"                                
+                            );
+                        }
+                        
+                    }
+                    function jump(){
+                        if(stop==false){
+                            $("#bird").stop().animate({
+                                top:"-=" + 9 + "%"
+                            },gameLoopSpeed,"linear",function(){
+                                jumping = false;
+                                fall();
+                            });
+                            speed=0;
+                            jumping = true;
+                        }   
+                    }
+                    $("#canvas").click(function() {
+                            jump();
+                    });
+                    $(document).keypress(function(){
+                            jump();
+                    });
+                    function addPipe(){
+                        var minHeight=5;
+                        var gap= 30;
+                        var randomHeight= Math.random () * ((100 - gap - minHeight) - minHeight) + minHeight;
+                        
+                        $('<div/>').appendTo('#canvas')
+                                .addClass('pipe')
+                                .css("height", randomHeight + "%")
+                                .animate({
+                                    left:"-=" + 120 +"%"
+                                    },pipespeed,"linear",function(){
+                                        $(this).remove();
+                                    });
+                        $('<div/>').appendTo('#canvas')
+                                .addClass('pipe')
+                                .css({"height": 100-(gap+randomHeight) + '%', "bottom": 0})
+                                .animate({
+                                    left:"-=" + 120 +"%"
+                                    },pipespeed,"linear",function(){
+                                        $(this).remove();
+                                    });
+                    }
+                    function collide(e1, e2){
+                       var e1Left=e1.position().left;
+                       var e1Right=e1.width()+e1Left;
+                       var e1Top=e1.position().top;
+                       var e1Bottom=e1.height()+e1Top;
+                       var e2Left=e2.position().left;
+                       var e2Right=e2.width()+e2Left;
+                       var e2Top=e2.position().top;
+                       var e2Bottom=e2.height()+e2Top;
+                       if (e1Right<e2Left || e1Left>e2Right || e1Bottom<e2Top || e1Top>e2Bottom){
+                           return false;
+                       }
+                       else{
+                           return true;
+                       }
+                    }
+                    function checkCollision(){
+                        var collided = false;
+                        $('.pipe').each(function(){
+                            if(collide($('#bird'), $(this))){
+                                collided = true;
+                            }
+                        });
+                        if(!collide($('#bird'),$('#canvas')))
+                        {
+                            collided=true;
+                        }
+                        
+                        if (collided)
+                        {
+                            $('.pipe').stop();
+                            stop=true;
+                            $('#bird').animate({
+                                top:'93%'
+                            })
+                            $('#ScoreNumber').text(score);
+                            $('#ScoreScreen').slideDown();
+                            $('#score').slideUp();
+                            var lastHighScore = localStorage.getItem("highScore");
+                            if(lastHighScore == null || lastHighScore < score){
+                                localStorage.setItem('highScore', score);
+                            }
+                            $('#BestNumber').text(localStorage.getItem('highScore'));
+                        }
+                    }
+                    function checkScore(){
+                        var smallestDistance = 999;
+                        var closestPipe= 0;
+                        $('.pipe').each(function(){
+                            var birdLeft= $('#bird').position().left;
+                            var pipeLeft= $(this).position().left;
+                            if(birdLeft > pipeLeft){
+                                var distance= birdLeft-pipeLeft;
+                                if(distance < smallestDistance){
+                                    smallestDistance=distance;
+                                    closestPipe = $(this);
+                                }
+                            }
+                        
+                        });
+                        if(closestPipe!=0 && !closestPipe.is(lastClosestPipe)){
+                            score++;
+                            $('#score').text(score);
+                        }
+                        
+                        
+                        lastClosestPipe=closestPipe;
+                        
+                    }
+                    var lastClosestPipe=0;
+                    
+            });
+          
+        </script>
+        <style>
+            @font-face{
+                font-family:FloopyBird;
+                src:url('04B_19__.TTF');
+            }
+            #canvas{
+                width:640px;
+                height:480px;
+                background-color:steelblue;
+                position:relative;
+                font-family:FloopyBird;
+                overflow:hidden;
+            }
+            #bird{
+                width:45px;
+                height:32px;
+                background-image:url("bird.png");
+                position:absolute;
+                top:50%;
+                left:30%;
+                background-size:cover;
+                
+            }
+            .pipe{
+                background-color:limegreen;
+                width:75px;
+                position:absolute;
+                left: 100%
+            }
+            #score{
+                color:white;
+                position:absolute;
+                top:40%;
+                left:50%;
+                font-size:40px;
+                z-index:1;
+                font-family:FloopyBird;
+                text-shadow: 2px 2px #000000, 2px -2px #000000,
+                    -2px 2px #000000, -2px -2px #000000;
+                
+                    
+            }
+            #ScoreScreen{
+                position:relative;
+                left:-50%;
+                top:-50%;
+                background-color:orange;
+                border:2px solid black;
+                border-radius: 7px;
+                padding: 15px;
+                z-index:1999;
+                font-size:21px;
+                color:wheat;
+                text-align:center;
+                display:none;
+            }
+            #ScoreContainer{
+                position:absolute;
+                top:50%;
+                left:50%;
+                
+            }
+            
+            
+        </style>
+            
+            
+            
+        
+        
+    </head>
+    
+    <body>
+        <div id="canvas">
+            <div id='score'>
+            0    
+                
+            </div>
+            <div id='ScoreContainer'><div id='ScoreScreen'>
+                Score
+                <div id='ScoreNumber'>
+                </div>
+                Best
+                <div id='BestNumber'>
+                </div>
+                
+            </div></div>
+            <div id="bird">
+            </div>
+            
+            
+        </div>
+            
+            
+      
+        
+        
+        
+        
+        
+        
+        
+    </body>
+
+
+
+</html>
+
